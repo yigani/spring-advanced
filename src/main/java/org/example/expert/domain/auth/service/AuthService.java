@@ -25,14 +25,14 @@ public class AuthService {
 
     @Transactional
     public SignupResponse signup(SignupRequest signupRequest) {
-
-        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
-
-        UserRole userRole = UserRole.of(signupRequest.getUserRole());
-
+        // 이메일 중복 확인
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
             throw new InvalidRequestException("이미 존재하는 이메일입니다.");
         }
+
+        //  중복이 아닐 경우에만 인코딩 및 객체 생성 수행
+        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
+        UserRole userRole = UserRole.of(signupRequest.getUserRole());
 
         User newUser = new User(
                 signupRequest.getEmail(),
@@ -45,6 +45,14 @@ public class AuthService {
 
         return new SignupResponse(bearerToken);
     }
+
+    // 이메일 중복 여부를 검증하는 메서드
+    private void validateDuplicateEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new InvalidRequestException("이미 존재하는 이메일입니다.");
+        }
+    }
+
 
     @Transactional(readOnly = true)
     public SigninResponse signin(SigninRequest signinRequest) {
